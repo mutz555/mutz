@@ -7,9 +7,13 @@ android {
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.mutz.fingerprintbypass"
+        applicationId "com.mutz555.fingerprintbypass"
         minSdk 26
         targetSdk 33
+    }
+
+    buildFeatures {
+        viewBinding true
     }
 
     packagingOptions {
@@ -26,5 +30,5 @@ repositories {
 }
 
 dependencies {
-    implementation files('libs/api-82.jar')
+    implementation fileTree(dir: "libs", include: ["*.jar"])
 }
