@@ -2,8 +2,7 @@ name: Build LSPosed Module APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -19,6 +18,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
 
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
