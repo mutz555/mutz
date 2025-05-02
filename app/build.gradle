@@ -42,7 +42,7 @@ repositories {
 
 dependencies {
     // Xposed API
-    implementation(name: 'api-82', ext: 'jar')
+    compileOnly(name: 'api-82', ext: 'jar')
 
     // AndroidX / Material
     implementation 'androidx.appcompat:appcompat:1.6.1'
