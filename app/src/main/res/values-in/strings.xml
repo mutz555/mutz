@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Fingerprint Bypass</string>
+    <string name="xposed_description">Bypass deteksi hardware fingerprint di HyperOS</string>
+    
+    <!-- Main Activity Strings -->
+    <string name="description">Modul LSPosed untuk bypass deteksi hardware fingerprint di HyperOS, dikembangkan oleh Mutz.</string>
+    <string name="how_it_works">Modul ini melakukan hook pada layanan fingerprint sistem dan membuatnya selalu melaporkan hardware fingerprint sebagai tersedia.</string>
+    
+    <string name="module_status">Status Modul:</string>
+    <string name="module_status_active">Aktif</string>
+    <string name="module_status_inactive">Tidak Aktif</string>
+    
+    <string name="module_enabled">Modul Diaktifkan</string>
+    <string name="module_disabled">Modul Dinonaktifkan</string>
+    <string name="debug_logging">Log Debug</string>
+    <string name="debug_enabled">Log debug diaktifkan</string>
+    <string name="debug_disabled">Log debug dinonaktifkan</string>
+    
+    <string name="logs">Log Debug</string>
+    <string name="clear_log">Hapus Log</string>
+    <string name="log_cleared">Log dihapus</string>
+    <string name="no_logs">Tidak ada log tersedia</string>
+    
+    <string name="version">Versi 1.0</string>
+    <string name="developer">Dikembangkan oleh Mutz</string>
+</resources>

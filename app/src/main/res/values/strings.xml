@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Fingerprint Bypass</string>
+    <string name="xposed_description">Bypass hardware fingerprint detection errors in HyperOS</string>
+    
+    <!-- Main Activity Strings -->
+    <string name="description">LSPosed module to bypass fingerprint hardware detection on HyperOS, developed by Mutz.</string>
+    <string name="how_it_works">This module hooks into the system\'s fingerprint service and forces it to report fingerprint hardware as available.</string>
+    
+    <string name="module_status">Module Status:</string>
+    <string name="module_status_active">Active</string>
+    <string name="module_status_inactive">Inactive</string>
+    
+    <string name="module_enabled">Module Enabled</string>
+    <string name="module_disabled">Module Disabled</string>
+    <string name="debug_logging">Debug Logging</string>
+    <string name="debug_enabled">Debug logging enabled</string>
+    <string name="debug_disabled">Debug logging disabled</string>
+    
+    <string name="logs">Debug Logs</string>
+    <string name="clear_log">Clear Log</string>
+    <string name="log_cleared">Log cleared</string>
+    <string name="no_logs">No logs available</string>
+    
+    <string name="version">Version 1.0</string>
+    <string name="developer">Developed by Mutz</string>
+</resources>
