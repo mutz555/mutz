@@ -3,32 +3,40 @@ plugins {
 }
 
 android {
-    namespace 'com.mutz555.fingerprintbypass'
+    namespace 'com.mutz.fingerprintbypass'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.mutz555.fingerprintbypass"
-        minSdk 26
+        applicationId "com.mutz.fingerprintbypass"
+        minSdk 24
         targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        // Menambahkan support multidex jika diperlukan
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildFeatures {
         viewBinding true
     }
-
-    packagingOptions {
-        exclude "META-INF/*"
-    }
-}
-
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-    google()
-    mavenCentral()
 }
 
 dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar"])
+    // Tambahkan library support Android jika dibutuhkan
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
