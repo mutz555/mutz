@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application'
+    id 'com.android.library'
 }
 
 android {
@@ -7,20 +7,16 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.mutz.fingerprintbypass"
+        // Ini modul, bukan aplikasi: no applicationId di library module
         minSdk 26
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
-
-        // Menambahkan support multidex jika diperlukan
         multiDexEnabled true
     }
 
     buildTypes {
         release {
+            // Modul Xposed biasanya tidak di-obfuscate
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
@@ -29,14 +25,30 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    buildFeatures {
-        viewBinding true
+    // Jangan aktifkan viewBinding kalau gak dipakai
+    // buildFeatures {
+    //     viewBinding true
+    // }
+}
+
+repositories {
+    google()
+    mavenCentral()
+    // Tambahkan flatDir untuk JAR lokal
+    flatDir {
+        dirs 'libs'
     }
 }
 
 dependencies {
-    // Tambahkan library support Android jika dibutuhkan
+    // Xposed API
+    implementation(name: 'api-82', ext: 'jar')
+
+    // AndroidX / Material
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // Multidex support
+    implementation 'androidx.multidex:multidex:2.0.1'
 }
