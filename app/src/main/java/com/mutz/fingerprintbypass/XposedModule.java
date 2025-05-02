@@ -1,216 +1,120 @@
 package com.mutz.fingerprintbypass;
 
 import android.content.Context;
-import android.os.Build;
-import android.util.Log;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-/**
- * Xposed Module to bypass fingerprint hardware check in HyperOS
- */
-public class XposedModule implements IXposedHookLoadPackage, IXposedHookZygoteInit {
-    
-    // Target classes and methods
-    private static final String FINGERPRINT_SERVICE_STUB_IMPL = "com.android.server.biometrics.fingerprint.FingerprintServiceStubImpl";
-    private static final String FINGERPRINT_AUTHENTICATOR = "com.android.server.biometrics.sensors.fingerprint.FingerprintAuthenticator";
-    private static final String FINGERPRINT_MANAGER = "android.hardware.fingerprint.FingerprintManager";
-    
-    // Packages to hook
-    private static final String[] SUPPORTED_PACKAGES = {
-        "android",
-        "com.android.systemui",
-        "com.android.settings"
-    };
-    
-    private boolean initialized = false;
-    
+public class XposedModule implements IXposedHookZygoteInit, IXposedHookLoadPackage {
+    private static final String TAG = "FingerprintBypass";
+
+    // Core classes
+    private static final String FINGERPRINT_STUB = 
+        "com.android.server.biometrics.fingerprint.FingerprintServiceStubImpl";
+    private static final String FINGERPRINT_AUTH = 
+        "com.android.server.biometrics.sensors.fingerprint.FingerprintAuthenticator";
+    private static final String BIOMETRIC_SERVICE = 
+        "com.android.server.biometrics.sensors.BiometricService";
+    private static final String BIOMETRIC_BASE = 
+        "com.android.server.biometrics.BiometricServiceBase";
+    private static final String BIOMETRIC_WRAP = 
+        "com.android.server.biometrics.BiometricServiceWrapper";
+    private static final String BIOMETRIC_MANAGER = 
+        "android.hardware.biometrics.BiometricManager";
+    private static final String BIOMETRIC_PROMPT = 
+        "android.hardware.biometrics.BiometricPrompt";
+
     @Override
     public void initZygote(StartupParam startupParam) throws Throwable {
-        // Initialize the logger
-        HookLogger.init();
-        HookLogger.log("Fingerprint Bypass module initializing in Zygote");
-    }
-    
-    @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (!initialized) {
-            initialized = true;
-            HookLogger.log("Fingerprint Bypass module initialized");
-        }
-        
-        // Only hook packages we're interested in
-        boolean packageSupported = false;
-        for (String pkg : SUPPORTED_PACKAGES) {
-            if (lpparam.packageName.equals(pkg)) {
-                packageSupported = true;
-                break;
-            }
-        }
-        
-        if (packageSupported) {
-            HookLogger.log("Hooking package: " + lpparam.packageName);
-            
-            try {
-                // Hook isHardwareDetected method
-                hookFingerprintService(lpparam);
-                
-                // Hook additional methods if needed
-                hookFingerprintAuthenticator(lpparam);
-                
-                // HyperOS specific hooks
-                hookHyperOSFingerprint(lpparam);
-                
-                HookLogger.log("Successfully hooked fingerprint methods in " + lpparam.packageName);
-            } catch (Throwable t) {
-                HookLogger.error("Error hooking fingerprint methods: " + t.getMessage(), t);
-            }
+        XposedBridge.log(TAG + ": initZygote — hooking system methods");
+
+        // Bypass core fingerprint stub
+        try {
+            Class<?> stub = XposedHelpers.findClass(FINGERPRINT_STUB, null);
+            XposedBridge.hookAllMethods(stub, "isHardwareDetected",
+                XC_MethodReplacement.returnConstant(true));
+            XposedBridge.log(TAG + ": hooked " + FINGERPRINT_STUB + ".isHardwareDetected");
+        } catch (Throwable t) {
+            XposedBridge.log(TAG + ": failed hook stub → " + t.getMessage());
         }
 
-        // Hook for our own app to check if module is working
-        if (lpparam.packageName.equals("com.mutz.fingerprintbypass")) {
-            XposedHelpers.findAndHookMethod(
-                    "com.mutz.fingerprintbypass.isModuleActive", 
-                    lpparam.classLoader,
-                    "isModuleActive", 
-                    XC_MethodReplacement.returnConstant(true));
-            HookLogger.log("Self-hook for isModuleActive successful");
-        }
-    }
-    
-    /**
-     * Hooks the FingerprintServiceStubImpl class to bypass hardware detection
-     */
-    private void hookFingerprintService(XC_LoadPackage.LoadPackageParam lpparam) {
-        // Main hook for isHardwareDetected
-        XposedHelpers.findAndHookMethod(
-                FINGERPRINT_SERVICE_STUB_IMPL,
-                lpparam.classLoader,
-                "isHardwareDetected",
-                new XC_MethodReplacement() {
-                    @Override
-                    protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
-                        HookLogger.log("Intercepted isHardwareDetected call, returning true");
-                        return true;
-                    }
-                });
-        
-        // Hook the error reporting method to catch more details
-        XposedHelpers.findAndHookMethod(
-                FINGERPRINT_SERVICE_STUB_IMPL,
-                lpparam.classLoader,
-                "getErrorString",
-                int.class,
-                Context.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        int errorCode = (int) param.args[0];
-                        HookLogger.log("Fingerprint error code intercepted: " + errorCode);
-                        
-                        // If error code is related to hardware detection, modify it
-                        if (errorCode == 7) { // FINGERPRINT_ERROR_LOCKOUT
-                            HookLogger.log("Intercepted FINGERPRINT_ERROR_LOCKOUT, allowing operation");
-                            param.setResult("Fingerprint operation allowed");
-                        }
-                    }
-                });
-    }
-    
-    /**
-     * Hooks the FingerprintAuthenticator class for additional bypass
-     */
-    private void hookFingerprintAuthenticator(XC_LoadPackage.LoadPackageParam lpparam) {
+        // Bypass BiometricManager API
         try {
-            // Try to hook the canAuthenticate method if it exists
-            XposedHelpers.findAndHookMethod(
-                    FINGERPRINT_AUTHENTICATOR,
-                    lpparam.classLoader,
-                    "canAuthenticate",
-                    new XC_MethodReplacement() {
-                        @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
-                            HookLogger.log("Intercepted canAuthenticate call, returning true");
-                            return true;
-                        }
-                    });
-            
-            // Hook the getAvailableSensorCount method if it exists
-            XposedHelpers.findAndHookMethod(
-                    FINGERPRINT_AUTHENTICATOR,
-                    lpparam.classLoader,
-                    "getAvailableSensorCount",
-                    new XC_MethodReplacement() {
-                        @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
-                            HookLogger.log("Intercepted getAvailableSensorCount call, returning 1");
-                            return 1;
-                        }
-                    });
+            Class<?> bm = XposedHelpers.findClass(BIOMETRIC_MANAGER, null);
+            XposedBridge.hookAllMethods(bm, "isHardwareDetected",
+                XC_MethodReplacement.returnConstant(true));
+            XposedBridge.log(TAG + ": hooked " + BIOMETRIC_MANAGER + ".isHardwareDetected");
         } catch (Throwable t) {
-            // It's okay if this hook fails, as the class or method might not exist in all versions
-            HookLogger.log("Could not hook FingerprintAuthenticator methods: " + t.getMessage());
+            XposedBridge.log(TAG + ": failed hook BiometricManager → " + t.getMessage());
+        }
+
+        // Bypass BiometricPrompt.authenticate(...) to always succeed
+        try {
+            Class<?> bp = XposedHelpers.findClass(BIOMETRIC_PROMPT, null);
+            XposedHelpers.findAndHookMethod(bp, "authenticate", 
+                android.app.KeyguardManager.class, XC_MethodReplacement.returnConstant(null));
+            XposedBridge.log(TAG + ": hooked " + BIOMETRIC_PROMPT + ".authenticate()");
+        } catch (Throwable t) {
+            XposedBridge.log(TAG + ": failed hook BiometricPrompt → " + t.getMessage());
         }
     }
-    
-    /**
-     * Hooks specific to HyperOS fingerprint functionality
-     */
-    private void hookHyperOSFingerprint(XC_LoadPackage.LoadPackageParam lpparam) {
-        try {
-            // Hook public FingerprintManager API
-            XposedHelpers.findAndHookMethod(
-                    FINGERPRINT_MANAGER,
-                    lpparam.classLoader,
-                    "isHardwareDetected",
-                    new XC_MethodReplacement() {
-                        @Override
-                        protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
-                            HookLogger.log("Intercepted FingerprintManager.isHardwareDetected, returning true");
-                            return true;
-                        }
-                    });
-            
-            // Additional hooks for HyperOS-specific biometric classes
-            // This may require adjustments based on specific HyperOS version
-            String[] hyperosClasses = {
-                "com.android.server.biometrics.sensors.BiometricService",
-                "com.android.server.biometrics.BiometricServiceBase",
-                "com.android.server.biometrics.BiometricServiceWrapper"
-            };
-            
-            for (String className : hyperosClasses) {
-                try {
-                    Class<?> clazz = lpparam.classLoader.loadClass(className);
-                    XposedHelpers.findAndHookMethod(
-                            className,
-                            lpparam.classLoader,
-                            "isHardwareDetected",
-                            new XC_MethodReplacement() {
-                                @Override
-                                protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
-                                    HookLogger.log("Intercepted " + className + ".isHardwareDetected, returning true");
-                                    return true;
-                                }
-                            });
-                    HookLogger.log("Successfully hooked " + className);
-                } catch (ClassNotFoundException | NoSuchMethodError e) {
-                    // Class or method not found, just continue with next class
-                    HookLogger.log("Class or method not found: " + className);
-                } catch (Throwable t) {
-                    HookLogger.error("Error hooking " + className + ": " + t.getMessage(), t);
+
+    @Override
+    public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        // Log every package that loads
+        XposedBridge.log(TAG + ": Loaded pkg → " + lpparam.packageName);
+
+        // Only proceed hooks for system packages where fingerprint runs
+        if (!"android".equals(lpparam.packageName)
+         && !"com.android.systemui".equals(lpparam.packageName)
+         && !"com.android.settings".equals(lpparam.packageName)) {
+            return;
+        }
+
+        XposedBridge.log(TAG + ": Applying hooks in " + lpparam.packageName);
+
+        // Hook stub impl in app processes if loaded there
+        safeHook(lpparam, FINGERPRINT_STUB, "isHardwareDetected", null);
+
+        // Hook error reporting
+        safeHook(lpparam, FINGERPRINT_STUB, "getErrorString",
+                 int.class, Context.class,
+                 new XC_MethodHook() {
+            @Override protected void beforeHookedMethod(MethodHookParam param) {
+                int code = (int)param.args[0];
+                XposedBridge.log(TAG + ": errorCode=" + code);
+                if (code == 7) { // LOCKOUT
+                    param.setResult("Operation allowed");
                 }
             }
-            
+        });
+
+        // Hook authenticator if present
+        safeHook(lpparam, FINGERPRINT_AUTH, "canAuthenticate", null);
+        safeHook(lpparam, FINGERPRINT_AUTH, "getAvailableSensorCount", null);
+
+        // Hook broader BiometricService classes
+        safeHook(lpparam, BIOMETRIC_SERVICE, "isHardwareDetected", null);
+        safeHook(lpparam, BIOMETRIC_BASE,    "isHardwareDetected", null);
+        safeHook(lpparam, BIOMETRIC_WRAP,    "isHardwareDetected", null);
+    }
+
+    /** Helper to wrap findAndHookMethod in try/catch plus logging */
+    private void safeHook(XC_LoadPackage.LoadPackageParam lp, 
+                          String className, String methodName, 
+                          Object... paramTypesAndCallback) {
+        try {
+            XposedHelpers.findAndHookMethod(
+                className, lp.classLoader, methodName, paramTypesAndCallback);
+            XposedBridge.log(TAG + ": hooked " + className + "." + methodName);
         } catch (Throwable t) {
-            HookLogger.log("Could not hook HyperOS specific methods: " + t.getMessage());
+            XposedBridge.log(TAG + ": failed hook " 
+                + className + "." + methodName + " → " + t.getMessage());
         }
     }
 }
