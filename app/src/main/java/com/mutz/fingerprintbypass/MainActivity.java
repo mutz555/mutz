@@ -1,31 +1,27 @@
-package com.mutz.fingerprintbypass.hooks
+package com.mutz.fingerprintbypass
 
-import android.util.Log
-import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage
-import com.highcapable.yukihookapi.hook.factory.*
-import com.highcapable.yukihookapi.hook.xposed.proxy.YukiHookBridge
-import com.highcapable.yukihookapi.hook.xposed.proxy.YukiHookModule
+import android.app.Application;
+import android.util.Log;
 
-class FingerprintBypassHook : YukiHookModule() {
-    override fun onHook() = hookPackage {
-        name = "android" // Target system server
+import com.highcapable.yukihookapi.hook.factory.HookFactory;
+import com.highcapable.yukihookapi.hook.factory.YukiHookHelper;
+import com.highcapable.yukihookapi.hook.type.HookParam;
+import com.highcapable.yukihookapi.template.YukiHookModule;
 
-        onHook {
-            // Kelas target
-            hookClass("com.android.server.biometrics.sensors.fingerprint.FingerprintServiceStubImpl") {
-                
-                // Method target
-                hookMethod("isFpHardwareDetected") {
-                    // Gantikan hasil dengan true
-                    replaceToTrue()
+public class MainActivity extends YukiHookModule {
 
-                    afterHook {
-                        Log.i("FingerprintBypass", "isFpHardwareDetected() telah dibypass ke true")
-                    }
-                }
-            }
-        }
+    @Override
+    public void onHook() {
+        YukiHookHelper.encase(config -> {
+            config.name("android"); // Target sistem server
+            config.onHook(() -> {
+                config.hookClass("com.android.server.biometrics.sensors.fingerprint.FingerprintServiceStubImpl", hook -> {
+                    hook.method("isFpHardwareDetected")
+                        .replaceToTrue(param -> {
+                            Log.i("FingerprintBypass", "isFpHardwareDetected() telah dibypass ke true");
+                        });
+                });
+            });
+        });
     }
 }
