@@ -51,4 +51,7 @@ dependencies {
 
     // Multidex support
     implementation 'androidx.multidex:multidex:2.0.1'
+
+    // YukiHookAPI
+    implementation 'com.highcapable.yukihookapi:api:1.1.0'
 }
