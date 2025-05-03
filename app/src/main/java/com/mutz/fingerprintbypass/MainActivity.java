@@ -1,4 +1,4 @@
-package com.mutz.fingerprintbypass
+package com.mutz.fingerprintbypass;
 
 import android.app.Application;
 import android.util.Log;
