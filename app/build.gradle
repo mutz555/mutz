@@ -8,7 +8,7 @@ yukiHookModuleConfig {
 
 android {
     namespace 'com.mutz.fingerprintbypass'
-    compileSdk 34
+    compileSdkVersion 34
 
     defaultConfig {
         minSdk 26
