@@ -1,11 +1,5 @@
 apply plugin: 'com.android.application'
 
-yukiHookModuleConfig {
-    moduleName = "Fingerprint Bypass"
-    modulePackageName = "com.mutz.fingerprintbypass"
-    isUsingXposed = true
-}
-
 android {
     namespace 'com.mutz.fingerprintbypass'
     compileSdkVersion 34
