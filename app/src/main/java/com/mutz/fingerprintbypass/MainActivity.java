@@ -11,7 +11,7 @@ public class MainActivity extends YukiHookModule {
             config.name("android");
             config.onHook(() -> {
                 config.hookClass("com.android.server.biometrics.sensors.fingerprint.FingerprintServiceStubImpl", hook -> {
-                    hook.method("isHardwareDetected")
+                    hook.method("isFpHardwareDetected")
                         .replaceToTrue(param -> {
                             Log.i("FingerprintBypass", "isHardwareDetected() dibypass ke true");
                         });
