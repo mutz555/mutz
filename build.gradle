@@ -6,7 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.1.0'
-        classpath 'com.highcapable.yukihookapi:plugin:1.1.0'
+        // HAPUS plugin YukiHookAPI karena tidak perlu classpath-nya
     }
 }
 
@@ -15,5 +15,6 @@ allprojects {
         google()
         mavenCentral()
         maven { url 'https://jitpack.io' } // INI JUGA WAJIB
+        maven { url 'https://s01.oss.sonatype.org/content/repositories/releases/' } // INI WAJIB UNTUK YukiHookAPI
     }
 }
