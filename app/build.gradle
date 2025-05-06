@@ -1,5 +1,11 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.highcapable.yukihookapi' // pakai apply, bukan id {}
+apply plugin: 'com.highcapable.yukihookapi'
+
+yukiHookModuleConfig {
+    moduleName = "Fingerprint Bypass"
+    modulePackageName = "com.mutz.fingerprintbypass"
+    isUsingXposed = true
+}
 
 android {
     namespace 'com.mutz.fingerprintbypass'
@@ -9,12 +15,6 @@ android {
         minSdk 26
         targetSdk 34
         multiDexEnabled true
-    }
-
-    yukiHookModuleConfig {
-        moduleName = "Fingerprint Bypass"
-        modulePackageName = "com.mutz.fingerprintbypass"
-        isUsingXposed = true
     }
 
     buildTypes {
