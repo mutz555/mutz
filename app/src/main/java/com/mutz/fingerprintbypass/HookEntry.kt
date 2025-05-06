@@ -13,17 +13,14 @@ import com.highcapable.yukihookapi.hook.xposed.YukiHookHelper
 class HookEntry : YukiHookModule(), IYukiHookXposedInit {
 
     override fun onHook() {
-        YukiHookHelper.encase(config = {
-            name("android")
-            onHook {
-                hookClass("com.android.server.biometrics.sensors.fingerprint.FingerprintServiceStubImpl") {
-                    method {
-                        name = "isFpHardwareDetected"
-                    }.replaceToTrue {
-                        Log.i("FingerprintBypass", "isFpHardwareDetected() bypassed!")
-                    }
-                }
-            }
-        })
+        YukiHookHelper.encase {
+    name("android")
+    
+    hookClass("com.android.server.biometrics.sensors.fingerprint.FingerprintServiceStubImpl") {
+        method {
+            name = "isFpHardwareDetected"
+        }.replaceToTrue {
+            Log.i("FingerprintBypass", "isFpHardwareDetected() bypassed!")
+        }
     }
 }
