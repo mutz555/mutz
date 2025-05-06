@@ -1,28 +1,40 @@
 package com.mutz.fingerprintbypass
 
 import android.util.Log
-import com.highcapable.yukihookapi.annotation.xposed.InjectYukiHookWithXposed
-import com.highcapable.yukihookapi.hook.factory.hookClass
-import com.highcapable.yukihookapi.hook.factory.method
-import com.highcapable.yukihookapi.hook.param.HookParam
-import com.highcapable.yukihookapi.hook.xposed.proxy.IYukiHookXposedInit
-import com.highcapable.yukihookapi.hook.xposed.YukiHookModule
-import com.highcapable.yukihookapi.hook.xposed.YukiHookHelper
+import de.robv.android.xposed.IXposedHookLoadPackage
+import de.robv.android.xposed.XC_MethodReplacement
+import de.robv.android.xposed.XposedBridge
+import de.robv.android.xposed.XposedHelpers
+import de.robv.android.xposed.callbacks.XC_LoadPackage
 
-@InjectYukiHookWithXposed
-class HookEntry : YukiHookModule(), IYukiHookXposedInit {
+class HookEntry : IXposedHookLoadPackage {
+    companion object {
+        private const val TAG = "FingerprintBypass"
+    }
 
-   override fun onHook() {
-    YukiHookHelper.encase(config = {
-        name("android")
-        onHook {
-            hookClass("com.android.server.biometrics.sensors.fingerprint.FingerprintServiceStubImpl") {
-                method {
-                    name = "isFpHardwareDetected"
-                }.replaceToTrue {
-                    Log.i("FingerprintBypass", "isFpHardwareDetected() bypassed!")
-                }
+    override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
+        if (lpparam.packageName == "android") {
+            try {
+                val fingerprintServiceStubImpl = XposedHelpers.findClass(
+                    "com.android.server.biometrics.sensors.fingerprint.FingerprintServiceStubImpl",
+                    lpparam.classLoader
+                )
+                
+                XposedHelpers.findAndHookMethod(
+                    fingerprintServiceStubImpl,
+                    "isFpHardwareDetected",
+                    object : XC_MethodReplacement() {
+                        override fun replaceHookedMethod(param: MethodHookParam): Any {
+                            Log.i(TAG, "isFpHardwareDetected() bypassed!")
+                            return true
+                        }
+                    }
+                )
+                
+                XposedBridge.log("$TAG: Successfully hooked FingerprintServiceStubImpl")
+            } catch (t: Throwable) {
+                XposedBridge.log("$TAG: Error hooking fingerprint service: ${t.message}")
             }
         }
-    }) // <-- ini penutup encase
+    }
 }
