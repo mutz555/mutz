@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fingerprint Bypass</string>
+    <string name="app_name">Fix HOS By Mutz</string>
     <string name="xposed_description">Bypass hardware fingerprint detection errors in HyperOS</string>
     
     <!-- Main Activity Strings -->
