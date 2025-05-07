@@ -1,7 +1,5 @@
 package com.mutz.fingerprintbypass
 
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraManager
 import android.util.Log
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
@@ -40,33 +38,34 @@ class HookEntry : IXposedHookLoadPackage {
                     XposedBridge.log("$TAG: Error hooking fingerprint service: ${t.message}")
                 }
             }
+
             "com.transsion.camera" -> {
                 try {
+                    val systemProperties = XposedHelpers.findClass(
+                        "android.os.SystemProperties",
+                        lpparam.classLoader
+                    )
+
                     XposedHelpers.findAndHookMethod(
-                        "android.hardware.camera2.CameraCharacteristics",
-                        lpparam.classLoader,
+                        systemProperties,
                         "get",
-                        Object::class.java,
+                        String::class.java,
                         object : XC_MethodHook() {
                             override fun afterHookedMethod(param: MethodHookParam) {
-                                val key = param.args[0]
-                                val value = param.result
-                                
-                                Log.d("CAM_HOOK", "Key: $key (${if (key != null) key.javaClass.name else "null"})")
-                                Log.d("CAM_HOOK", "Value: ${if (value != null) value.javaClass.name else "null"}")
-                                
-                                // Ganti Boolean dengan dummy int[] kalau perlu
-                                if (value is Boolean) {
-                                    Log.w("CAM_HOOK", "Substituting Boolean with dummy int[] to prevent crash")
-                                    param.result = intArrayOf(0)
+                                val key = param.args[0] as String
+                                Log.i(TAG, "SystemProperties.get($key) called")
+
+                                if (key.contains("ro.tran.version", ignoreCase = true)) {
+                                    Log.i(TAG, "Spoofing SystemProperties.get($key) -> 8.1.0")
+                                    param.result = "8.1.0"
                                 }
                             }
                         }
                     )
-                    
-                    XposedBridge.log("$TAG: Successfully hooked CameraCharacteristics.get()")
-                } catch (t: Throwable) {
-                    XposedBridge.log("$TAG: Error hooking camera: ${t.message}")
+
+                    XposedBridge.log("$TAG: Successfully hooked SystemProperties.get()")
+                } catch (e: Throwable) {
+                    XposedBridge.log("$TAG: Failed to hook SystemProperties.get(): ${e.message}")
                 }
             }
         }
