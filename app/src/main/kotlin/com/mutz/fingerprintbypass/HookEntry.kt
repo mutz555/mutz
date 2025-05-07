@@ -11,20 +11,28 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage
 class HookEntry : IXposedHookLoadPackage {
     companion object {
         private const val TAG = "FingerprintBypass"
+        private val spoofProps = mapOf(
+            "ro.product.model" to "Infinix HOT 40 Pro",
+            "ro.product.manufacturer" to "Infinix",
+            "ro.product.device" to "X6837",
+            "ro.product.name" to "Infinix-X6837",
+            "ro.build.product" to "Infinix-X6837",
+            "ro.product.brand" to "Infinix",
+            "ro.build.fingerprint" to "Infinix/Infinix-X6837/INFINIX:14/UKQ-14.0.0/240411:user/release-keys"
+        )
     }
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "android" -> {
                 try {
-                    val fingerprintServiceStubImpl = XposedHelpers.findClass(
+                    val clazz = XposedHelpers.findClass(
                         "com.android.server.biometrics.sensors.fingerprint.FingerprintServiceStubImpl",
                         lpparam.classLoader
                     )
 
                     XposedHelpers.findAndHookMethod(
-                        fingerprintServiceStubImpl,
-                        "isFpHardwareDetected",
+                        clazz, "isFpHardwareDetected",
                         object : XC_MethodReplacement() {
                             override fun replaceHookedMethod(param: MethodHookParam): Any {
                                 Log.i(TAG, "isFpHardwareDetected() bypassed!")
@@ -33,39 +41,33 @@ class HookEntry : IXposedHookLoadPackage {
                         }
                     )
 
-                    XposedBridge.log("$TAG: Successfully hooked FingerprintServiceStubImpl")
-                } catch (t: Throwable) {
-                    XposedBridge.log("$TAG: Error hooking fingerprint service: ${t.message}")
+                    XposedBridge.log("$TAG: Successfully hooked fingerprint service")
+                } catch (e: Throwable) {
+                    XposedBridge.log("$TAG: Failed fingerprint hook: ${e.message}")
                 }
             }
 
             "com.transsion.camera" -> {
                 try {
-                    val systemProperties = XposedHelpers.findClass(
-                        "android.os.SystemProperties",
-                        lpparam.classLoader
-                    )
-
                     XposedHelpers.findAndHookMethod(
-                        systemProperties,
+                        "android.os.SystemProperties",
+                        lpparam.classLoader,
                         "get",
                         String::class.java,
                         object : XC_MethodHook() {
-                            override fun afterHookedMethod(param: MethodHookParam) {
+                            override fun beforeHookedMethod(param: MethodHookParam) {
                                 val key = param.args[0] as String
-                                Log.i(TAG, "SystemProperties.get($key) called")
-
-                                if (key.contains("ro.tran.version", ignoreCase = true)) {
-                                    Log.i(TAG, "Spoofing SystemProperties.get($key) -> 8.1.0")
-                                    param.result = "8.1.0"
+                                if (spoofProps.containsKey(key)) {
+                                    param.result = spoofProps[key]
+                                    Log.i(TAG, "Spoofed $key -> ${spoofProps[key]}")
                                 }
                             }
                         }
                     )
 
-                    XposedBridge.log("$TAG: Successfully hooked SystemProperties.get()")
+                    XposedBridge.log("$TAG: Spoofed SystemProperties for Transsion camera")
                 } catch (e: Throwable) {
-                    XposedBridge.log("$TAG: Failed to hook SystemProperties.get(): ${e.message}")
+                    XposedBridge.log("$TAG: Failed spoofing camera props: ${e.message}")
                 }
             }
         }
