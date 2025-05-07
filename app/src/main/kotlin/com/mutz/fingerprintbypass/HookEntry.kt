@@ -1,7 +1,10 @@
 package com.mutz.fingerprintbypass
 
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.util.Log
 import de.robv.android.xposed.IXposedHookLoadPackage
+import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -15,11 +18,12 @@ class HookEntry : IXposedHookLoadPackage {
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         if (lpparam.packageName == "android") {
             try {
+                // Hook Fingerprint isFpHardwareDetected
                 val fingerprintServiceStubImpl = XposedHelpers.findClass(
                     "com.android.server.biometrics.sensors.fingerprint.FingerprintServiceStubImpl",
                     lpparam.classLoader
                 )
-                
+
                 XposedHelpers.findAndHookMethod(
                     fingerprintServiceStubImpl,
                     "isFpHardwareDetected",
@@ -30,10 +34,40 @@ class HookEntry : IXposedHookLoadPackage {
                         }
                     }
                 )
-                
+
                 XposedBridge.log("$TAG: Successfully hooked FingerprintServiceStubImpl")
             } catch (t: Throwable) {
                 XposedBridge.log("$TAG: Error hooking fingerprint service: ${t.message}")
+            }
+
+            try {
+                // Hook CameraManager.getCameraIdList
+                XposedHelpers.findAndHookMethod(
+                    CameraManager::class.java,
+                    "getCameraIdList",
+                    object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+                            val result = param.result as? Array<String>
+                            Log.i(TAG, "getCameraIdList() hooked: ${result?.contentToString()}")
+                        }
+                    }
+                )
+
+                // Hook CameraCharacteristics.get
+                XposedHelpers.findAndHookMethod(
+                    CameraCharacteristics::class.java,
+                    "get",
+                    CameraCharacteristics.Key::class.java,
+                    object : XC_MethodHook() {
+                        override fun beforeHookedMethod(param: MethodHookParam) {
+                            Log.i(TAG, "CameraCharacteristics.get() called with key: ${param.args[0]}")
+                        }
+                    }
+                )
+
+                XposedBridge.log("$TAG: CameraManager & CameraCharacteristics hooked")
+            } catch (e: Throwable) {
+                XposedBridge.log("$TAG: Error hooking camera API: ${e.message}")
             }
         }
     }
