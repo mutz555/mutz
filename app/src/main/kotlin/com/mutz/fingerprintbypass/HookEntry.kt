@@ -40,34 +40,35 @@ class HookEntry : IXposedHookLoadPackage {
                     XposedBridge.log("$TAG: Error hooking fingerprint service: ${t.message}")
                 }
             }
-
-            public class MainHook implements IXposedHookLoadPackage {
-
-    @Override
-    public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (!lpparam.packageName.equals("com.transsion.camera")) return;
-
-        XposedHelpers.findAndHookMethod(
-            "android.hardware.camera2.CameraCharacteristics",
-            lpparam.classLoader,
-            "get",
-            Object.class,
-            new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    Object key = param.args[0];
-                    Object value = param.getResult();
-
-                    Log.d("CAM_HOOK", "Key: " + key + " (" + (key != null ? key.getClass().getName() : "null") + ")");
-                    Log.d("CAM_HOOK", "Value: " + (value != null ? value.getClass().getName() : "null"));
-
-                    // Ganti Boolean dengan dummy int[] kalau perlu
-                    if (value instanceof Boolean) {
-                        Log.w("CAM_HOOK", "Substituting Boolean with dummy int[] to prevent crash");
-                        param.setResult(new int[]{0});
-                    }
+            "com.transsion.camera" -> {
+                try {
+                    XposedHelpers.findAndHookMethod(
+                        "android.hardware.camera2.CameraCharacteristics",
+                        lpparam.classLoader,
+                        "get",
+                        Object::class.java,
+                        object : XC_MethodHook() {
+                            override fun afterHookedMethod(param: MethodHookParam) {
+                                val key = param.args[0]
+                                val value = param.result
+                                
+                                Log.d("CAM_HOOK", "Key: $key (${if (key != null) key.javaClass.name else "null"})")
+                                Log.d("CAM_HOOK", "Value: ${if (value != null) value.javaClass.name else "null"}")
+                                
+                                // Ganti Boolean dengan dummy int[] kalau perlu
+                                if (value is Boolean) {
+                                    Log.w("CAM_HOOK", "Substituting Boolean with dummy int[] to prevent crash")
+                                    param.result = intArrayOf(0)
+                                }
+                            }
+                        }
+                    )
+                    
+                    XposedBridge.log("$TAG: Successfully hooked CameraCharacteristics.get()")
+                } catch (t: Throwable) {
+                    XposedBridge.log("$TAG: Error hooking camera: ${t.message}")
                 }
             }
-        );
+        }
     }
 }
