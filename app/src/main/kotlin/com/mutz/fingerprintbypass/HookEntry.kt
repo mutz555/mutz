@@ -41,47 +41,33 @@ class HookEntry : IXposedHookLoadPackage {
                 }
             }
 
-            "com.transsion.camera" -> {
-                try {
-                    // Hook CameraManager.getCameraIdList
-                    XposedHelpers.findAndHookMethod(
-                        CameraManager::class.java,
-                        "getCameraIdList",
-                        object : XC_MethodHook() {
-                            override fun afterHookedMethod(param: MethodHookParam) {
-                                val result = param.result as? Array<String>
-                                Log.i(TAG, "getCameraIdList() hooked: ${result?.contentToString()}")
-                            }
-                        }
-                    )
+            public class MainHook implements IXposedHookLoadPackage {
 
-                    // Hook CameraCharacteristics.get
-                    XposedHelpers.findAndHookMethod(
-                        CameraCharacteristics::class.java,
-                        "get",
-                        CameraCharacteristics.Key::class.java,
-                        object : XC_MethodHook() {
-                            override fun beforeHookedMethod(param: MethodHookParam) {
-                                val key = param.args[0]
-                                Log.i(TAG, "CameraCharacteristics.get() called with key: $key")
+    @Override
+    public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        if (!lpparam.packageName.equals("com.transsion.camera")) return;
 
-                                val keyStr = key.toString()
-                                if (
-                                    keyStr.contains("available", ignoreCase = true) ||
-                                    keyStr.contains("cameraid.role", ignoreCase = true)
-                                ) {
-                                    Log.i(TAG, "Bypassing CameraCharacteristics.get() with TRUE for key: $key")
-                                    param.result = true
-                                }
-                            }
-                        }
-                    )
+        XposedHelpers.findAndHookMethod(
+            "android.hardware.camera2.CameraCharacteristics",
+            lpparam.classLoader,
+            "get",
+            Object.class,
+            new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    Object key = param.args[0];
+                    Object value = param.getResult();
 
-                    XposedBridge.log("$TAG: CameraManager & CameraCharacteristics hooked in com.transsion.camera")
-                } catch (e: Throwable) {
-                    XposedBridge.log("$TAG: Error hooking camera API: ${e.message}")
+                    Log.d("CAM_HOOK", "Key: " + key + " (" + (key != null ? key.getClass().getName() : "null") + ")");
+                    Log.d("CAM_HOOK", "Value: " + (value != null ? value.getClass().getName() : "null"));
+
+                    // Ganti Boolean dengan dummy int[] kalau perlu
+                    if (value instanceof Boolean) {
+                        Log.w("CAM_HOOK", "Substituting Boolean with dummy int[] to prevent crash");
+                        param.setResult(new int[]{0});
+                    }
                 }
             }
-        }
+        );
     }
 }
