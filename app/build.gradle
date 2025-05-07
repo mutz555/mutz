@@ -35,5 +35,5 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.23"
-    compileOnly(name: 'api-82', ext: 'jar') // Xposed API
+    compileOnly files('libs/api-82.jar') // pakai path manual
 }
