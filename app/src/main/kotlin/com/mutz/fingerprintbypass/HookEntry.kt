@@ -53,14 +53,25 @@ class HookEntry : IXposedHookLoadPackage {
                     }
                 )
 
-                // Hook CameraCharacteristics.get
+                // Hook CameraCharacteristics.get dan force true untuk key tertentu
                 XposedHelpers.findAndHookMethod(
                     CameraCharacteristics::class.java,
                     "get",
                     CameraCharacteristics.Key::class.java,
                     object : XC_MethodHook() {
                         override fun beforeHookedMethod(param: MethodHookParam) {
-                            Log.i(TAG, "CameraCharacteristics.get() called with key: ${param.args[0]}")
+                            val key = param.args[0]
+                            Log.i(TAG, "CameraCharacteristics.get() called with key: $key")
+
+                            val keyStr = key.toString()
+                            if (
+                                keyStr.contains("android.info.available", ignoreCase = true) ||
+                                keyStr.contains("cameraid.role.cameraId", ignoreCase = true) ||
+                                keyStr.contains("cameraid.role.cameraIds", ignoreCase = true)
+                            ) {
+                                Log.i(TAG, "Bypassing CameraCharacteristics.get() with TRUE for key: $key")
+                                param.result = true
+                            }
                         }
                     }
                 )
