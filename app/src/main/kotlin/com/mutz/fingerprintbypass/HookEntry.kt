@@ -1,7 +1,5 @@
 package com.mutz.fingerprintbypass
 
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraManager
 import android.util.Log
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
@@ -41,23 +39,31 @@ class HookEntry : IXposedHookLoadPackage {
             }
 
             try {
-                // Hook CameraManager.getCameraIdList
+                // Safe reflection-based camera hooks
+                val cameraManagerClass = XposedHelpers.findClass(
+                    "android.hardware.camera2.CameraManager", lpparam.classLoader
+                )
+                val cameraCharacteristicsClass = XposedHelpers.findClass(
+                    "android.hardware.camera2.CameraCharacteristics", lpparam.classLoader
+                )
+
+                // Hook getCameraIdList
                 XposedHelpers.findAndHookMethod(
-                    CameraManager::class.java,
+                    cameraManagerClass,
                     "getCameraIdList",
                     object : XC_MethodHook() {
                         override fun afterHookedMethod(param: MethodHookParam) {
-                            val result = param.result as? Array<String>
+                            val result = param.result as? Array<*>
                             Log.i(TAG, "getCameraIdList() hooked: ${result?.contentToString()}")
                         }
                     }
                 )
 
-                // Hook CameraCharacteristics.get dan force true untuk key tertentu
+                // Hook get() pada CameraCharacteristics
                 XposedHelpers.findAndHookMethod(
-                    CameraCharacteristics::class.java,
+                    cameraCharacteristicsClass,
                     "get",
-                    CameraCharacteristics.Key::class.java,
+                    Any::class.java,
                     object : XC_MethodHook() {
                         override fun beforeHookedMethod(param: MethodHookParam) {
                             val key = param.args[0]
@@ -76,9 +82,9 @@ class HookEntry : IXposedHookLoadPackage {
                     }
                 )
 
-                XposedBridge.log("$TAG: CameraManager & CameraCharacteristics hooked")
+                XposedBridge.log("$TAG: CameraManager & CameraCharacteristics hooked safely")
             } catch (e: Throwable) {
-                XposedBridge.log("$TAG: Error hooking camera API: ${e.message}")
+                XposedBridge.log("$TAG: Error hooking camera API reflectively: ${e.message}")
             }
         }
     }
