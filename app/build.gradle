@@ -6,14 +6,15 @@ android {
     compileSdkVersion 34
 
     defaultConfig {
+        applicationId "com.mutz.fingerprintbypass"
         minSdk 26
         targetSdk 34
     }
 
     buildTypes {
         debug {
-            debuggable true
             minifyEnabled false
+            shrinkResources false
         }
     }
 
@@ -27,14 +28,6 @@ android {
     }
 }
 
-repositories {
-    google()
-    mavenCentral()
-    flatDir {
-        dirs 'libs'
-    }
-}
-
 dependencies {
-    compileOnly(name: 'api-82', ext: 'jar') // Xposed API aja
+    compileOnly(name: 'api-82', ext: 'jar') // Xposed API
 }
