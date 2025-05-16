@@ -6,6 +6,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import android.hardware.biometrics.fingerprint.SensorProps // Import SensorProps
 
 class HookEntry : IXposedHookLoadPackage {
 
@@ -40,7 +41,7 @@ class HookEntry : IXposedHookLoadPackage {
                         val instance = param.args[0] as? String
                         val result = param.result
                         if (result is Array<*>) {
-                            val props = result as Array<android.hardware.biometrics.fingerprint.SensorProps>
+                            val props = result as Array<android.hardware.biometrics.fingerprint.SensorProps> // Specify type here
 
                             Log.d(TAG, "getSensorPropForInstance() returned ${props.size} props for instance: $instance")
                             props.forEachIndexed { index, prop ->
