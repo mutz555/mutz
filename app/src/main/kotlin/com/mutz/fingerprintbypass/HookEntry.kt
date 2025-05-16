@@ -38,14 +38,14 @@ class HookEntry : IXposedHookLoadPackage {
 
                     override fun afterHookedMethod(param: MethodHookParam) {
                         val instance = param.args[0] as? String
-                        val props = param.result as? Array<android.hardware.biometrics.fingerprint.SensorProps>
+                        val result = param.result
+                        if (result is Array<*>) {
+                            val props = result as Array<android.hardware.biometrics.fingerprint.SensorProps>
 
-                        if (props == null) {
-                            Log.d(TAG, "getSensorPropForInstance() returned null for instance: $instance")
-                        } else {
                             Log.d(TAG, "getSensorPropForInstance() returned ${props.size} props for instance: $instance")
                             props.forEachIndexed { index, prop ->
                                 Log.d(TAG, "  Prop[$index]: sensorType = ${prop.sensorType}")
+
                                 if (prop.commonProps != null) {
                                     Log.d(TAG, "  Prop[$index]: commonProps.sensorId = ${prop.commonProps.sensorId}")
                                     Log.d(TAG, "  Prop[$index]: commonProps.sensorStrength = ${prop.commonProps.sensorStrength}")
@@ -72,13 +72,18 @@ class HookEntry : IXposedHookLoadPackage {
 
                                 // Log other relevant fields from prop
                             }
-                        }
 
-                        // Log where the data came from (mSensorPropsMap or HAL)
-                        if (props == null || props.isEmpty()) {
-                            Log.d(TAG, "  Data was retrieved from HAL")
+                            // Log where the data came from (mSensorPropsMap or HAL)
+                            if (props.isEmpty()) {
+                                Log.d(TAG, "  Data was retrieved from HAL")
+                            } else {
+                                Log.d(TAG, "  Data was retrieved from mSensorPropsMap")
+                            }
+
+                        } else if (result == null) {
+                            Log.d(TAG, "getSensorPropForInstance() returned null for instance: $instance")
                         } else {
-                            Log.d(TAG, "  Data was retrieved from mSensorPropsMap")
+                            Log.w(TAG, "getSensorPropForInstance() returned unexpected result type: ${result.javaClass.name}")
                         }
                     }
                 }
