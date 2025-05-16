@@ -11,7 +11,6 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -20,7 +19,6 @@ android {
             minifyEnabled false
             shrinkResources false
         }
-        // Tidak perlu konfigurasi release jika hanya fokus pada debug
     }
 
     compileOptions {
@@ -32,11 +30,17 @@ android {
         jvmTarget = '1.8'
     }
 
-    // Opsi packaging bisa membantu, tapi tidak selalu wajib untuk debug saja
     packagingOptions {
         exclude 'META-INF/LICENSE.md'
         exclude 'META-INF/NOTICE.md'
     }
+}
+
+repositories {
+    google()
+    mavenCentral()
+    // Anda mungkin perlu ini untuk beberapa library lama
+    // jcenter()  // JCenter sudah mati, jadi hindari jika memungkinkan
 }
 
 dependencies {
