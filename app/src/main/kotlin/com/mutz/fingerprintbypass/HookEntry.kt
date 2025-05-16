@@ -4,7 +4,7 @@ import android.util.Log
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
+import de.robv.android.xposed.XposedHelpers // Pastikan ini ada!
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 
 class HookEntry : IXposedHookLoadPackage {
@@ -30,14 +30,14 @@ class HookEntry : IXposedHookLoadPackage {
             )
             XposedBridge.log("$TAG: fingerprintSensorConfigurationsClass: $fingerprintSensorConfigurationsClass")
 
-            val getSensorPropForInstanceMethod = XposedHelpers.findMethod(
+            val getSensorPropForInstanceMethod = XposedHelpers.findMethod( // Perhatikan ini
                 fingerprintSensorConfigurationsClass,
                 "getSensorPropForInstance",
                 String::class.java
             )
             XposedBridge.log("$TAG: getSensorPropForInstanceMethod: $getSensorPropForInstanceMethod")
 
-            XposedHelpers.hookMethod(
+            XposedHelpers.hookMethod( // Dan ini
                 getSensorPropForInstanceMethod,
                 object : XC_MethodHook() {
                     override fun beforeHookedMethod(param: MethodHookParam) {
