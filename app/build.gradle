@@ -9,9 +9,6 @@ android {
         applicationId "com.mutz.fingerprintbypass"
         minSdk 26
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -29,23 +26,14 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-
-    packagingOptions {
-        exclude 'META-INF/LICENSE.md'
-        exclude 'META-INF/NOTICE.md'
-    }
 }
 
 repositories {
     google()
     mavenCentral()
-    // Anda mungkin perlu ini untuk beberapa library lama
-    // jcenter()  // JCenter sudah mati, jadi hindari jika memungkinkan
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.23"
-    compileOnly files('libs/api-82.jar')
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.23"
+    compileOnly files('libs/api-82.jar') // pakai path manual
 }
