@@ -8,6 +8,7 @@ import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 
 class HookEntry : IXposedHookLoadPackage {
+
     companion object {
         private const val TAG = "FingerprintBypass"
     }
@@ -31,12 +32,12 @@ class HookEntry : IXposedHookLoadPackage {
                 String::class.java,
                 object : XC_MethodHook() {
                     override fun beforeHookedMethod(param: MethodHookParam) {
-                        val instance = param.args[0] as String
+                        val instance = param.args[0] as? String
                         Log.d(TAG, "getSensorPropForInstance() called with instance: $instance")
                     }
 
                     override fun afterHookedMethod(param: MethodHookParam) {
-                        val instance = param.args[0] as String
+                        val instance = param.args[0] as? String
                         val props = param.result as? Array<android.hardware.biometrics.fingerprint.SensorProps>
 
                         if (props == null) {
@@ -51,6 +52,24 @@ class HookEntry : IXposedHookLoadPackage {
                                 } else {
                                     Log.d(TAG, "  Prop[$index]: commonProps = null")
                                 }
+
+                                if (prop.sensorLocations != null) {
+                                    Log.d(TAG, "  Prop[$index]: sensorLocations.size = ${prop.sensorLocations.size}")
+                                } else {
+                                    Log.d(TAG, "  Prop[$index]: sensorLocations = null")
+                                }
+
+                                Log.d(TAG, "  Prop[$index]: supportsNavigationGestures = ${prop.supportsNavigationGestures}")
+                                Log.d(TAG, "  Prop[$index]: supportsDetectInteraction = ${prop.supportsDetectInteraction}")
+                                Log.d(TAG, "  Prop[$index]: halHandlesDisplayTouches = ${prop.halHandlesDisplayTouches}")
+                                Log.d(TAG, "  Prop[$index]: halControlsIllumination = ${prop.halControlsIllumination}")
+
+                                if (prop.touchDetectionParameters != null) {
+                                    Log.d(TAG, "  Prop[$index]: touchDetectionParameters = ${prop.touchDetectionParameters}")
+                                } else {
+                                    Log.d(TAG, "  Prop[$index]: touchDetectionParameters = null")
+                                }
+
                                 // Log other relevant fields from prop
                             }
                         }
