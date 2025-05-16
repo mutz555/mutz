@@ -9,6 +9,10 @@ android {
         applicationId "com.mutz.fingerprintbypass"
         minSdk 26
         targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -16,6 +20,7 @@ android {
             minifyEnabled false
             shrinkResources false
         }
+        // Tidak perlu konfigurasi release jika hanya fokus pada debug
     }
 
     compileOptions {
@@ -26,14 +31,17 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-}
 
-repositories {
-    google()
-    mavenCentral()
+    // Opsi packaging bisa membantu, tapi tidak selalu wajib untuk debug saja
+    packagingOptions {
+        exclude 'META-INF/LICENSE.md'
+        exclude 'META-INF/NOTICE.md'
+    }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.23"
-    compileOnly files('libs/api-82.jar') // pakai path manual
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.23"
+    compileOnly files('libs/api-82.jar')
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
 }
